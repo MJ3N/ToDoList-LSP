@@ -20,6 +20,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['new_task'])) {
     exit;
 }
 
+// Edit tugas
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_index'], $_POST['edit_task'])) {
+    $index = $_POST['edit_index'];
+    $newText = trim($_POST['edit_task']);
+    if ($newText !== '' && isset($_SESSION['tasks'][$index])) {
+        $_SESSION['tasks'][$index]['task'] = htmlspecialchars($newText);
+    }
+    header("Location: ".$_SERVER['PHP_SELF']);
+    exit;
+}
+
 // Toggle status
 if (isset($_GET['toggle']) && is_numeric($_GET['toggle'])) {
     $index = $_GET['toggle'];
@@ -49,7 +60,6 @@ if (isset($_GET['clear'])) {
     exit;
 }
 ?>
-
 
 <!DOCTYPE html>
 <html>
@@ -186,24 +196,35 @@ if (isset($_GET['clear'])) {
                 <?php foreach ($_SESSION['tasks'] as $index => $item): ?>
                     <li>
                         <div class="left">
-                            <!-- Checkbox untuk toggle status -->
+                            <!-- Checkbox toggle -->
                             <form method="get" style="margin:0;">
                                 <input type="hidden" name="toggle" value="<?= $index ?>">
                                 <input type="checkbox" onchange="this.form.submit()" <?= $item['status'] === 'Selesai' ? 'checked' : '' ?>>
                             </form>
 
                             <div>
-                                <span class="<?= $item['status'] === 'Selesai' ? 'task-done' : '' ?>">
-                                    <?= htmlspecialchars($item['task']) ?>
-                                </span><br>
-                                <span class="info">
-                                    Status: <?= $item['status'] ?> |
-                                    Dibuat: <?= $item['created'] ?>
-                                </span>
+                                <?php if (isset($_GET['edit']) && $_GET['edit'] == $index): ?>
+                                    <form method="POST" style="margin:0;">
+                                        <input type="hidden" name="edit_index" value="<?= $index ?>">
+                                        <input type="text" name="edit_task" value="<?= htmlspecialchars($item['task']) ?>" required>
+                                        <button type="submit">💾</button>
+                                    </form>
+                                <?php else: ?>
+                                    <span class="<?= $item['status'] === 'Selesai' ? 'task-done' : '' ?>">
+                                        <?= htmlspecialchars($item['task']) ?>
+                                    </span><br>
+                                    <span class="info">
+                                        Status: <?= $item['status'] ?> |
+                                        Dibuat: <?= $item['created'] ?>
+                                    </span>
+                                <?php endif; ?>
                             </div>
                         </div>
 
-                        <a class="hapus" href="?delete=<?= $index ?>" onclick="return confirm('Hapus tugas ini?')">❌</a>
+                        <div>
+                            <a class="hapus" href="?delete=<?= $index ?>" onclick="return confirm('Hapus tugas ini?')">❌</a>
+                            <a href="?edit=<?= $index ?>" style="margin-left: 8px;" title="Edit">✏️</a>
+                        </div>
                     </li>
                 <?php endforeach; ?>
             <?php else: ?>
